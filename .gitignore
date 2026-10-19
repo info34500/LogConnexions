@@ -1,0 +1,12 @@
+# Journaux générés (ne jamais publier de données réelles)
+*.csv
+*.log
+
+# Windows
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Éditeurs
+.vscode/
+*.swp
