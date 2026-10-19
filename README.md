@@ -23,6 +23,8 @@ Deux scripts PowerShell, déployés par **GPO**, qui enregistrent qui ouvre et f
   - [4. Réglages recommandés](#4-réglages-recommandés)
   - [5. Tester](#5-tester)
 - [Exploiter les journaux](#exploiter-les-journaux)
+  - [Historique d'un utilisateur](#historique-dun-utilisateur)
+  - [Autres requêtes utiles](#autres-requêtes-utiles)
 - [Limites connues](#limites-connues)
 - [Dépannage](#dépannage)
 - [Licence](#licence)
@@ -53,10 +55,12 @@ Les deux scripts sont **silencieux** : si le partage est indisponible, ils écho
 
 ```
 LogConnexions/
-├── scripts/
-│   ├── Log-Connexion.ps1      # script d'ouverture de session
-│   └── Log-Deconnexion.ps1    # script de fermeture de session
-├── .gitattributes             # fins de ligne CRLF pour les .ps1
+├── scripts/                       # déployés par GPO sur les postes
+│   ├── Log-Connexion.ps1          # script d'ouverture de session
+│   └── Log-Deconnexion.ps1        # script de fermeture de session
+├── outils/                        # lancés à la main par l'administrateur
+│   └── Historique-Utilisateur.ps1 # historique d'un utilisateur sur tous les postes
+├── .gitattributes                 # fins de ligne CRLF pour les .ps1
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -166,22 +170,51 @@ Une ligne avec votre nom, la date et l'heure doit apparaître. Fermez la session
 
 ## Exploiter les journaux
 
+> Le dossier `outils/` contient des scripts à lancer **à la main**, depuis un poste d'administration. Ils ne doivent pas être ajoutés à la GPO.
+
+### Historique d'un utilisateur
+
+`outils/Historique-Utilisateur.ps1` parcourt tous les fichiers `<NomDuPoste>.csv` du partage, garde les lignes de l'utilisateur demandé et produit un CSV trié **de la connexion la plus récente à la plus ancienne**.
+
+**Paramètres**
+
+| Paramètre | Obligatoire | Description |
+|---|---|---|
+| `-Utilisateur` | oui | Login (`jdupont`), login avec domaine (`CONTOSO\jdupont`) ou motif avec jokers (`dupont*`). |
+| `-Racine` | non | Partage contenant les CSV. Par défaut `\\SERVEUR\LogsConnexions$` — **à adapter** dans le script, comme pour les deux autres. |
+| `-Sortie` | non | Fichier CSV à produire. Par défaut `Historique_<login>.csv` dans le dossier courant (écrasé à chaque exécution). |
+
+**Exemples**
+
+```powershell
+# Historique de jdupont -> .\Historique_jdupont.csv
+.\Historique-Utilisateur.ps1 -Utilisateur jdupont
+
+# Avec le domaine et un fichier de sortie choisi
+.\Historique-Utilisateur.ps1 -Utilisateur "CONTOSO\jdupont" -Sortie C:\Temp\jdupont.csv
+
+# Tous les comptes commençant par "dupont"
+.\Historique-Utilisateur.ps1 -Utilisateur "dupont*"
+```
+
+Résultat affiché :
+
+```
+12 connexion(s) trouvée(s) sur 3 poste(s) -> C:\Temp\jdupont.csv
+```
+
+Le fichier produit a les mêmes colonnes que les journaux (`Poste;Utilisateur;Date;Heure;Deconnexion`) et s'ouvre directement dans Excel.
+
+> Il faut un compte ayant le droit de **lecture** sur le partage. Si la stratégie d'exécution bloque le script : `powershell -ExecutionPolicy Bypass -File .\Historique-Utilisateur.ps1 -Utilisateur jdupont`.
+
+### Autres requêtes utiles
+
 **Fusionner tous les postes dans un seul fichier**
 
 ```powershell
 Get-ChildItem '\\SERVEUR\LogsConnexions$\*.csv' |
     ForEach-Object { Import-Csv $_.FullName -Delimiter ';' -Encoding UTF8 } |
     Export-Csv 'C:\Temp\Connexions-Tous-Postes.csv' -Delimiter ';' -NoTypeInformation -Encoding UTF8
-```
-
-**Retrouver sur quels postes un utilisateur s'est connecté**
-
-```powershell
-Get-ChildItem '\\SERVEUR\LogsConnexions$\*.csv' |
-    ForEach-Object { Import-Csv $_.FullName -Delimiter ';' -Encoding UTF8 } |
-    Where-Object Utilisateur -like '*\jdupont' |
-    Sort-Object { [datetime]::ParseExact("$($_.Date) $($_.Heure)", 'dd/MM/yyyy HH:mm:ss', $null) } |
-    Format-Table -AutoSize
 ```
 
 **Sessions encore ouvertes (ou non clôturées)**
