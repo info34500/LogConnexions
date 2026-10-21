@@ -1,6 +1,6 @@
 # LogConnexions
 
-Deux scripts PowerShell, déployés par **GPO**, qui enregistrent qui ouvre et ferme une session sur les postes d'un domaine Active Directory.
+Deux scripts PowerShell, déployés par **GPO**, qui enregistrent l'utilisateur qui ouvre et ferme une session sur les postes d'un domaine Active Directory.
 
 À chaque ouverture de session, une ligne est ajoutée dans un fichier CSV propre au poste ; à la fermeture, l'heure de déconnexion est complétée sur cette même ligne.
 
