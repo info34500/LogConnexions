@@ -89,7 +89,7 @@ PC-COMPTA-01;CONTOSO\jdupont;20/10/2026;08:39:55;
 
 ### 1. Créer le partage réseau
 
-Sur le serveur de fichiers, créez un dossier (par exemple `D:\LogsConnexions`) et partagez-le sous le nom **`LogsConnexions$`** (le `$` masque le partage dans le voisinage réseau).
+Sur le serveur de fichiers, créez un dossier (par exemple `D:\LogsConnexions`) et partagez-le sous le nom `LogsConnexions$`
 
 **Autorisations de partage**
 
@@ -119,7 +119,7 @@ New-SmbShare -Name 'LogsConnexions$' -Path 'D:\LogsConnexions' `
 
 ### 2. Adapter les scripts
 
-Dans **les deux scripts**, remplacez `SERVEUR` par le nom de votre serveur de fichiers :
+Dans les deux scripts, remplacez `SERVEUR` par le nom de votre serveur de fichiers :
 
 ```powershell
 # A ADAPTER : partage réseau qui contiendra les fichiers (un fichier par poste)
